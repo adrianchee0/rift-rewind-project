@@ -5,7 +5,7 @@
 }
 
 body {
-    font-family: 'Amazon Ember', 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'JetBrains Mono', 'Helvetica Neue', Arial, sans-serif;
     line-height: 1.6;
     color: #232f3e;
     background: #ffffff;
@@ -22,14 +22,15 @@ body::before {
     width: 100%;
     height: 100%;
     background:
-        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(255, 99, 132, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(54, 162, 235, 0.1) 0%, transparent 50%);
+        rgb(229, 229, 229);
+        /*radial-gradient(circle at 20% 80%, rgba(79, 198, 43, 0.742) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(174, 199, 60, 0.648) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(34, 124, 94, 0.499) 0%, transparent 50%);*/
     z-index: -1;
 }
 
 .aws-link {
-    background: #7877c6;
+    background: #282744;
     color: white;
     padding: 12px 24px;
     text-decoration: none;
@@ -123,7 +124,7 @@ main {
 }
 
 .fun-facts h3 {
-    text-align: left;
+    text-align: center;
     color: #232f3e;
     font-size: 32px;
     font-weight: 700;
@@ -133,7 +134,7 @@ main {
 
 .facts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
     gap: 24px;
 }
 
@@ -226,7 +227,7 @@ main {
 
 .cta-button {
     display: inline-block;
-    background: #7877c6;
+    background: #282744;
     color: white;
     padding: 12px 24px;
     text-decoration: none;
@@ -348,7 +349,7 @@ main {
 
 /* Contact form submit button */
 .contact-submit-btn {
-    background: #7877c6;
+    background: #282744;
     color: white;
     padding: 12px 32px;
     border: none;
