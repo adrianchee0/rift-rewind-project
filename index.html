@@ -213,139 +213,116 @@
   const RIOT_API_URL = 'https://hfvbicd5ed77v7qzcnxw5de4x40tdsxd.lambda-url.ap-southeast-1.on.aws/'; // Your Lambda Function URL
 
   document.addEventListener('DOMContentLoaded', function() {
-    const lookupBtn = document.getElementById('lookup-btn');
-    const summonerNameInput = document.getElementById('summoner-name');
-    const gameNameInput = document.getElementById('game-name');
-    const tagLineInput = document.getElementById('tag-line');
-    const regionSelect = document.getElementById('region');
-
-    lookupBtn.addEventListener('click', async function() {
-      // Parse inputs
-      const combined = summonerNameInput.value.trim();
-      let gameName = '';
-      let tagLine = '';
-
-      if (combined && combined.includes('#')) {
-        const parts = combined.split('#');
-        gameName = parts[0].trim();
-        tagLine = parts.slice(1).join('#').trim();
-      } else {
-        gameName = gameNameInput.value.trim();
-        tagLine = tagLineInput.value.trim();
-      }
-
-      const region = regionSelect.value;
-      const messageDiv = document.getElementById('lookup-message');
-      const resultsDiv = document.getElementById('summoner-results');
-
-      if (!gameName || !tagLine) {
-        showMessage('Please enter a Riot ID as GameName#TagLine or provide both Game Name and Tag Line.', 'error');
-        return;
-      }
-
-      lookupBtn.textContent = 'Looking up...';
-      lookupBtn.disabled = true;
-      messageDiv.style.display = 'none';
-      resultsDiv.style.display = 'none';
-
-      try {
-        const payload = { gameName, tagLine, region };
-        console.log('Request payload:', payload);
-
-        const response = await fetch(RIOT_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+            const lookupBtn = document.getElementById('lookup-btn');
+            const summonerNameInput = document.getElementById('summoner-name');
+            const tagLineInput = document.getElementById('tagLine');
+            const regionSelect = document.getElementById('region');
+            
+            lookupBtn.addEventListener('click', async function() {
+                const summonerName = summonerNameInput.value.trim();
+                const tagLine = tagLineInput.value.trim();
+                const region = regionSelect.value;
+                const messageDiv = document.getElementById('lookup-message');
+                const resultsDiv = document.getElementById('summoner-results');
+                
+                if (!summonerName) {
+                    showMessage('Please enter a summoner name', 'error');
+                    return;
+                }
+                
+                // Show loading state
+                lookupBtn.textContent = 'Looking up...';
+                lookupBtn.disabled = true;
+                messageDiv.style.display = 'none';
+                resultsDiv.style.display = 'none';
+                
+                try {
+                    const response = await fetch(RIOT_API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            summonerName: summonerName,
+                            tagLine: tagLine,
+                            region: region
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        displaySummonerData(data);
+                        showMessage('Summoner found!', 'success');
+                    } else {
+                        showMessage(data.error || 'Failed to fetch summoner data', 'error');
+                    }
+                } catch (error) {
+                    showMessage('Network error. Please try again.', 'error');
+                }
+                
+                // Reset button
+                lookupBtn.textContent = 'Look Up Summoner';
+                lookupBtn.disabled = false;
+            });
+            
+            // Enter key support
+            summonerNameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    lookupBtn.click();
+                }
+            });
         });
-
-        const text = await response.text();
-        let data;
-        try { data = text ? JSON.parse(text) : {}; } catch (e) { data = { raw: text }; }
-
-        if (response.ok) {
-          displaySummonerData(data);
-          showMessage('Summoner found!', 'success');
-        } else {
-          const errMsg = data.error || data.message || (data.raw ? data.raw : `Server responded ${response.status}`);
-          showMessage(errMsg, 'error');
+        
+        function displaySummonerData(data) {
+            const resultsDiv = document.getElementById('summoner-results');
+            const summonerInfo = document.getElementById('summoner-info');
+            const championMastery = document.getElementById('champion-mastery');
+            
+            // Display summoner info
+            summonerInfo.innerHTML = `
+                <div class="summoner-card">
+                    <h5>${data.summoner.name}</h5>
+                    <p>Level: ${data.summoner.level}</p>
+                </div>
+            `;
+            
+            // Display top champions
+            if (data.topChampions && data.topChampions.length > 0) {
+                const championsHtml = data.topChampions.map(champ => `
+                    <div class="champion-card">
+                        <p><strong>Champion ID:</strong> ${champ.championId}</p>
+                        <p><strong>Mastery Level:</strong> ${champ.championLevel}</p>
+                        <p><strong>Mastery Points:</strong> ${champ.championPoints.toLocaleString()}</p>
+                    </div>
+                `).join('');
+                
+                championMastery.innerHTML = `
+                    <h5>Top Champions</h5>
+                    <div class="champions-grid">
+                        ${championsHtml}
+                    </div>
+                `;
+            } else {
+                championMastery.innerHTML = '<p>No champion mastery data found.</p>';
+            }
+            
+            resultsDiv.style.display = 'block';
         }
-      } catch (error) {
-        console.error('Fetch failed:', error);
-        showMessage('Network error. See console for details.', 'error');
-      } finally {
-        lookupBtn.textContent = 'Look Up Summoner';
-        lookupBtn.disabled = false;
-      }
-    });
+        
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('lookup-message');
+            messageDiv.textContent = text;
+            messageDiv.className = `lookup-message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 10000);
+        }
+    </script>
 
-    [summonerNameInput, gameNameInput, tagLineInput].forEach(inp => {
-      inp.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') lookupBtn.click();
-      });
-    });
-  });
-
-  function displaySummonerData(data) {
-    const resultsDiv = document.getElementById('summoner-results');
-    const summonerInfo = document.getElementById('summoner-info');
-    const championMastery = document.getElementById('champion-mastery');
-
-    const summ = data.summoner || data;
-    const top = data.topChampions || [];
-
-    summonerInfo.innerHTML = `
-      <div class="summoner-card">
-        <h5>${escapeHtml(summ.name || summ.displayName || 'Unknown')}</h5>
-        <p>Level: ${escapeHtml(String(summ.level || summ.summonerLevel || '—'))}</p>
-      </div>
-    `;
-
-    if (top.length > 0) {
-      const championsHtml = top.map(champ => `
-        <div class="champion-card">
-          <p><strong>Champion ID:</strong> ${escapeHtml(String(champ.championId || '—'))}</p>
-          <p><strong>Mastery Level:</strong> ${escapeHtml(String(champ.championLevel || '—'))}</p>
-          <p><strong>Mastery Points:</strong> ${escapeHtml(String((champ.championPoints || 0).toLocaleString()))}</p>
-        </div>
-      `).join('');
-
-      championMastery.innerHTML = `
-        <h5>Top Champions</h5>
-        <div class="champions-grid">
-          ${championsHtml}
-        </div>
-      `;
-    } else {
-      championMastery.innerHTML = '<p>No champion mastery data found.</p>';
-    }
-
-    resultsDiv.style.display = 'block';
-  }
-
-  function showMessage(text, type) {
-    const messageDiv = document.getElementById('lookup-message');
-    messageDiv.textContent = text;
-    messageDiv.className = `lookup-message ${type}`;
-    messageDiv.style.display = 'block';
-    setTimeout(() => { messageDiv.style.display = 'none'; }, 10000);
-  }
-
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>"'`=\/]/g, function(s) {
-      return ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;',
-        '/': '&#x2F;',
-        '`': '&#x60;',
-        '=': '&#x3D;'
-      })[s];
-    });
-  }
-</script>
 
 
 
